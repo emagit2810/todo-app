@@ -17,6 +17,7 @@ export interface Todo {
   description?: string;
   complexity?: number; // 1-10
   subtasks?: Subtask[];
+  dueDate?: number; // Timestamp
 }
 
 export interface Medicine {
@@ -38,6 +39,7 @@ export interface Expense {
 
 export enum ViewMode {
   LIST = 'LIST',
+  CALENDAR = 'CALENDAR',
   BRAINSTORM = 'BRAINSTORM',
   MEDICINES = 'MEDICINES',
   EXPENSES = 'EXPENSES',

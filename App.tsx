@@ -3,9 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Todo, ViewMode, Medicine, Expense, Priority, Subtask } from './types';
 import { TodoItem } from './components/TodoItem';
 import { brainstormTasks } from './services/geminiService';
-import { PlusIcon, BrainIcon, ArrowsExpandIcon, ArrowsCollapseIcon, FlagIcon, BellIcon } from './components/Icons';
+import { PlusIcon, BrainIcon, ArrowsExpandIcon, ArrowsCollapseIcon, FlagIcon, BellIcon, ClockIcon } from './components/Icons';
 import { MedicinePanel } from './components/MedicinePanel';
 import { ExpensesPanel } from './components/ExpensesPanel';
+import { CalendarPanel } from './components/CalendarPanel';
 import { Sidebar } from './components/Sidebar';
 import * as db from './services/db';
 import { sendReminder } from './services/reminderService';
@@ -25,6 +26,7 @@ function App() {
   // --- State: UI ---
   const [inputValue, setInputValue] = useState('');
   const [inputPriority, setInputPriority] = useState<Priority>('P4'); // Default priority for new task
+  const [inputDueDate, setInputDueDate] = useState(''); // YYYY-MM-DD string
   const [isInputExpanded, setIsInputExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.LIST);
   const [brainstormQuery, setBrainstormQuery] = useState('');
@@ -93,8 +95,17 @@ function App() {
   }, []);
 
   // --- Handlers: Todos ---
-  const addTodo = useCallback(async (text: string, priority: Priority = 'P4') => {
+  const addTodo = useCallback(async (text: string, priority: Priority = 'P4', dateOverride?: number) => {
     if (!text.trim()) return;
+
+    let dueTimestamp: number | undefined = undefined;
+    if (dateOverride) {
+        dueTimestamp = dateOverride;
+    } else if (inputDueDate) {
+         const [y, m, d] = inputDueDate.split('-').map(Number);
+         dueTimestamp = new Date(y, m - 1, d, 12, 0, 0).getTime();
+    }
+
     const newTodo: Todo = {
       id: crypto.randomUUID(),
       text: text.trim(),
@@ -102,19 +113,21 @@ function App() {
       createdAt: Date.now(),
       priority: priority,
       complexity: 1,
-      subtasks: []
+      subtasks: [],
+      dueDate: dueTimestamp
     };
     
     // Optimistic Update
     setTodos(prev => [newTodo, ...prev]);
     setInputValue('');
     setInputPriority('P4'); // Reset to default
+    setInputDueDate(''); // Reset date
     setReminderText(''); // Reset reminder
     setShowReminderInput(false);
     
     // DB Update
     await db.putItem('todos', newTodo);
-  }, []);
+  }, [inputDueDate]);
 
   const handleUpdateTodo = useCallback(async (updatedTodo: Todo) => {
       setTodos(prev => prev.map(t => t.id === updatedTodo.id ? updatedTodo : t));
@@ -289,6 +302,16 @@ function App() {
         );
     }
 
+    if (viewMode === ViewMode.CALENDAR) {
+        return (
+            <CalendarPanel 
+                todos={todos}
+                onUpdateTodo={handleUpdateTodo}
+                onAddTodo={(text, priority, date) => addTodo(text, priority, date)}
+            />
+        );
+    }
+
     // Filtered Todos
     const filteredTodos = filterPriority === 'ALL' 
         ? todos 
@@ -348,6 +371,18 @@ function App() {
                                 {p === 'P4' ? '-' : p.replace('P','')}
                             </button>
                         ))}
+                     </div>
+
+                     {/* Date Picker Input for Main Create */}
+                     <div className="flex items-center mr-2 bg-slate-800 rounded p-1">
+                        <input 
+                            type="date"
+                            value={inputDueDate}
+                            onChange={(e) => setInputDueDate(e.target.value)}
+                            className="bg-transparent text-xs text-slate-400 hover:text-white focus:outline-none w-5 h-6 opacity-50 hover:opacity-100 focus:w-24 transition-all"
+                            title="Set Due Date"
+                        />
+                        <ClockIcon className="w-4 h-4 text-slate-400 pointer-events-none absolute ml-0.5" />
                      </div>
                      
                      {/* Expand Button */}

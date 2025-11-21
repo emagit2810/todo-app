@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Todo, Priority, Subtask } from '../types';
-import { CheckIcon, TrashIcon, SpeakerIcon, FlagIcon, ChevronUpIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from './Icons';
+import { CheckIcon, TrashIcon, SpeakerIcon, FlagIcon, ChevronUpIcon, ChevronDownIcon, PlusIcon, XMarkIcon, ClockIcon } from './Icons';
 import { speakText } from '../services/geminiService';
 
 interface TodoItemProps {
@@ -89,6 +89,18 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
       setNewSubtask('');
   };
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const dateVal = e.target.value; // yyyy-mm-dd
+      if (dateVal) {
+          // Create date at noon to avoid timezone flips
+          const [y, m, d] = dateVal.split('-').map(Number);
+          const newDate = new Date(y, m - 1, d, 12, 0, 0);
+          onUpdate({ ...todo, dueDate: newDate.getTime() });
+      } else {
+          onUpdate({ ...todo, dueDate: undefined });
+      }
+  };
+
   return (
     <div className="group bg-slate-800/50 hover:bg-slate-800 p-4 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-all duration-200 mb-4 shadow-sm">
       {/* Top Row: Title, Priority, Complexity */}
@@ -119,7 +131,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
                     />
                     
                     {/* Complexity Counter */}
-                    <div className="flex items-center bg-slate-900 rounded-lg border border-slate-700">
+                    <div className="flex items-center bg-slate-900 rounded-lg border border-slate-700 hidden sm:flex">
                         <button 
                             onClick={() => updateComplexity(-1)}
                             className="px-2 py-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded-l-lg border-r border-slate-800"
@@ -146,6 +158,17 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
                         <FlagIcon className="w-3.5 h-3.5" />
                         {todo.priority || 'P4'}
                     </button>
+                </div>
+
+                {/* Date Row */}
+                <div className="flex items-center gap-2 mt-1">
+                    <ClockIcon className="w-3 h-3 text-slate-500" />
+                    <input 
+                        type="date"
+                        value={todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : ''}
+                        onChange={handleDateChange}
+                        className="bg-transparent text-xs text-slate-400 hover:text-slate-200 focus:outline-none focus:text-white border-b border-transparent focus:border-slate-600 transition-colors w-28"
+                    />
                 </div>
             </div>
           </div>

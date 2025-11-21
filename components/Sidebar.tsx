@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { ViewMode, Priority } from '../types';
-import { ListBulletIcon, BrainIcon, PillIcon, BanknotesIcon, ChevronLeftIcon, ChevronRightIcon, FlagIcon } from './Icons';
+import { ListBulletIcon, BrainIcon, PillIcon, BanknotesIcon, ChevronLeftIcon, ChevronRightIcon, FlagIcon, CalendarIcon } from './Icons';
 
 interface SidebarProps {
   currentView: ViewMode;
@@ -33,6 +34,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setViewMode, curr
           { id: 'P2', label: 'Medium Priority', color: 'text-orange-400' },
           { id: 'P3', label: 'Low Priority', color: 'text-blue-400' },
       ]
+    },
+    {
+        id: ViewMode.CALENDAR,
+        label: 'Calendar',
+        icon: CalendarIcon,
     },
     {
       id: ViewMode.BRAINSTORM,
